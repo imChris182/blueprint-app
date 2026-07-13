@@ -1,0 +1,10 @@
+{
+  "name": "Blueprint",
+  "short_name": "Blueprint",
+  "description": "個人資產、負債與夢想清單管理",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F2F0EB",
+  "theme_color": "#F2F0EB",
+  "orientation": "portrait"
+}

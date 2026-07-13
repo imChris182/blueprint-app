@@ -6,198 +6,372 @@
 <title>Blueprint</title>
 
 <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#EEF2F6" />
+<meta name="theme-color" content="#F2F0EB" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Blueprint" />
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-  html, body { margin:0; padding:0; background:#EEF2F6; overscroll-behavior:none; }
+  html, body { margin:0; padding:0; background:#F2F0EB; overscroll-behavior:none; }
   * { -webkit-tap-highlight-color: transparent; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 
-<script type="text/plain" id="app-source">
-const { useState, useEffect, useRef } = React;
-const { createRoot } = ReactDOM;
+<script>
+  window.addEventListener("error", function (e) {
+    var root = document.getElementById("root");
+    if (root) {
+      root.innerHTML =
+        '<div style="max-width:520px;margin:60px auto;padding:20px;font-family:monospace;' +
+        'background:#fff5f5;border:1px solid #f3b4a6;border-radius:12px;color:#7a2b1a;' +
+        'white-space:pre-wrap;word-break:break-word;">' +
+        '<div style="font-weight:bold;margin-bottom:8px;">執行時發生錯誤 (Runtime Error)</div>' +
+        '<div style="font-size:13px;">' + ((e.error && e.error.stack) || e.message) + '</div></div>';
+    }
+  });
+</script>
+
+<script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const {
+  createRoot
+} = ReactDOM;
 
 /* ------------------------------------------------------------------ */
-/*  簡易圖示（取代外部圖示庫，避免載入失敗）                              */
+/*  簡易圖示                                                            */
 /* ------------------------------------------------------------------ */
 
-function Icon({ children, size = 20, strokeWidth = 2, fill = "none", style = {}, className = "" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill={fill}
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={style}
-      className={className}
-    >
-      {children}
-    </svg>
-  );
+function Icon({
+  children,
+  size = 20,
+  strokeWidth = 2,
+  fill = "none",
+  style = {},
+  className = ""
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: fill,
+    stroke: "currentColor",
+    strokeWidth: strokeWidth,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    style: style,
+    className: className
+  }, children);
 }
-
-const Plus = (p) => (
-  <Icon {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></Icon>
-);
-const Trash2 = (p) => (
-  <Icon {...p}>
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-    <path d="M10 11v6" />
-    <path d="M14 11v6" />
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-  </Icon>
-);
-const X = (p) => (
-  <Icon {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>
-);
-const TrendingDown = (p) => (
-  <Icon {...p}><polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" /></Icon>
-);
-const TrendingUp = (p) => (
-  <Icon {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></Icon>
-);
-const Sparkles = (p) => (
-  <Icon {...p} fill="currentColor" strokeWidth={0}>
-    <path d="M12 2l1.6 4.9L18.5 8.5l-4.9 1.6L12 15l-1.6-4.9L5.5 8.5l4.9-1.6L12 2z" />
-    <path d="M19 13l.8 2.3 2.3.8-2.3.8-.8 2.3-.8-2.3-2.3-.8 2.3-.8L19 13z" />
-  </Icon>
-);
-const Check = (p) => (
-  <Icon {...p}><polyline points="20 6 9 17 4 12" /></Icon>
-);
-const RotateCcw = (p) => (
-  <Icon {...p}><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></Icon>
-);
-const Landmark = (p) => (
-  <Icon {...p}>
-    <line x1="3" y1="22" x2="21" y2="22" />
-    <line x1="6" y1="18" x2="6" y2="11" />
-    <line x1="10" y1="18" x2="10" y2="11" />
-    <line x1="14" y1="18" x2="14" y2="11" />
-    <line x1="18" y1="18" x2="18" y2="11" />
-    <polygon points="12 2 21 8 3 8" />
-  </Icon>
-);
-const LineChartIcon = (p) => (
-  <Icon {...p}><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></Icon>
-);
-const Layers = (p) => (
-  <Icon {...p}>
-    <polygon points="12 2 2 7 12 12 22 7 12 2" />
-    <polyline points="2 17 12 22 22 17" />
-    <polyline points="2 12 12 17 22 12" />
-  </Icon>
-);
+const Plus = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("line", {
+  x1: "12",
+  y1: "5",
+  x2: "12",
+  y2: "19"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "5",
+  y1: "12",
+  x2: "19",
+  y2: "12"
+}));
+const Trash2 = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("polyline", {
+  points: "3 6 5 6 21 6"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M10 11v6"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M14 11v6"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"
+}));
+const X = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("line", {
+  x1: "18",
+  y1: "6",
+  x2: "6",
+  y2: "18"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "6",
+  y1: "6",
+  x2: "18",
+  y2: "18"
+}));
+const TrendingDown = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("polyline", {
+  points: "23 18 13.5 8.5 8.5 13.5 1 6"
+}), /*#__PURE__*/React.createElement("polyline", {
+  points: "17 18 23 18 23 12"
+}));
+const TrendingUp = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("polyline", {
+  points: "23 6 13.5 15.5 8.5 10.5 1 18"
+}), /*#__PURE__*/React.createElement("polyline", {
+  points: "17 6 23 6 23 12"
+}));
+const Sparkles = p => /*#__PURE__*/React.createElement(Icon, {
+  ...p,
+  fill: "currentColor",
+  strokeWidth: 0
+}, /*#__PURE__*/React.createElement("path", {
+  d: "M12 2l1.6 4.9L18.5 8.5l-4.9 1.6L12 15l-1.6-4.9L5.5 8.5l4.9-1.6L12 2z"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M19 13l.8 2.3 2.3.8-2.3.8-.8 2.3-.8-2.3-2.3-.8 2.3-.8L19 13z"
+}));
+const Check = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("polyline", {
+  points: "20 6 9 17 4 12"
+}));
+const RotateCcw = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("polyline", {
+  points: "1 4 1 10 7 10"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M3.51 15a9 9 0 1 0 2.13-9.36L1 10"
+}));
+const Landmark = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("line", {
+  x1: "3",
+  y1: "22",
+  x2: "21",
+  y2: "22"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "6",
+  y1: "18",
+  x2: "6",
+  y2: "11"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "10",
+  y1: "18",
+  x2: "10",
+  y2: "11"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "14",
+  y1: "18",
+  x2: "14",
+  y2: "11"
+}), /*#__PURE__*/React.createElement("line", {
+  x1: "18",
+  y1: "18",
+  x2: "18",
+  y2: "11"
+}), /*#__PURE__*/React.createElement("polygon", {
+  points: "12 2 21 8 3 8"
+}));
+const HomeIcon = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("path", {
+  d: "M3 11l9-8 9 8"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M5 10v10h14V10"
+}));
+const ChevronLeft = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("polyline", {
+  points: "15 18 9 12 15 6"
+}));
+const ChevronRight = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("polyline", {
+  points: "9 18 15 12 9 6"
+}));
+const Settings = p => /*#__PURE__*/React.createElement(Icon, p, /*#__PURE__*/React.createElement("circle", {
+  cx: "12",
+  cy: "12",
+  r: "3"
+}), /*#__PURE__*/React.createElement("path", {
+  d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15 1.65 1.65 0 0 0 3.17 14H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .68.39 1.29 1 1.51.62.25 1.33.12 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.45.49-.58 1.2-.33 1.82.22.61.83 1 1.51 1H21a2 2 0 1 1 0 4h-.09c-.68 0-1.29.39-1.51 1z"
+}));
 
 /* ------------------------------------------------------------------ */
-/*  設計代碼（Blueprint 製圖風格）                                       */
+/*  設計代碼（莫蘭迪中性色系）                                           */
 /* ------------------------------------------------------------------ */
 const C = {
-  paper: "#EEF2F6",
-  card: "#FFFFFF",
-  ink: "#16324F",
-  inkSoft: "#5B7291",
-  border: "#DCE4EC",
-  grid: "rgba(22,50,79,0.07)",
-  blue: "#2B6CB8",
-  rust: "#B0432A",
-  gold: "#9C6B12",
+  bg: "#F2F0EB",
+  card: "#FAF9F6",
+  sage: "#87978B",
+  slateBlue: "#87939F",
+  taupe: "#A49689",
+  terracotta: "#B58F82",
+  ink: "#3F4441",
+  inkSoft: "#777C78",
+  border: "#D8D5CF"
 };
-
 const STORAGE_KEY = "blueprint-finance-dream-data-v1";
-
-const uid = () =>
-  (window.crypto && window.crypto.randomUUID && window.crypto.randomUUID()) ||
-  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-const formatMoney = (n) => {
+const uid = () => window.crypto && window.crypto.randomUUID && window.crypto.randomUUID() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const formatMoney = n => {
   const num = Number(n) || 0;
-  return num.toLocaleString("zh-Hant-TW", { maximumFractionDigits: 0 });
+  return num.toLocaleString("zh-Hant-TW", {
+    maximumFractionDigits: 0
+  });
 };
-
-const defaultData = () => ({
-  liabilities: [
-    { id: uid(), name: "信用卡分期", amount: 45000, note: "" },
-    { id: uid(), name: "汽車貸款", amount: 220000, note: "" },
-  ],
-  assetCategories: [
-    {
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const monthKeyOf = dateStr => (dateStr || todayISO()).slice(0, 7);
+const yearKeyOf = dateStr => (dateStr || todayISO()).slice(0, 4);
+const formatMonthLabel = mKey => {
+  const [y, m] = mKey.split("-");
+  return `${y}年${parseInt(m, 10)}月`;
+};
+const formatDateTW = dateStr => {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-");
+  return `${y}/${parseInt(m, 10)}/${parseInt(d, 10)}`;
+};
+const shiftMonth = (mKey, delta) => {
+  const [y, m] = mKey.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+const defaultData = () => {
+  const today = todayISO();
+  const d = new Date();
+  const d2 = new Date(d);
+  d2.setDate(d.getDate() - 3);
+  const d3 = new Date(d);
+  d3.setDate(d.getDate() - 7);
+  const iso = x => x.toISOString().slice(0, 10);
+  const expenseCategories = [{
+    id: "food",
+    name: "餐飲"
+  }, {
+    id: "transport",
+    name: "交通"
+  }, {
+    id: "shopping",
+    name: "購物"
+  }, {
+    id: "entertainment",
+    name: "娛樂"
+  }, {
+    id: "travel",
+    name: "旅遊"
+  }, {
+    id: "pet",
+    name: "寵物"
+  }, {
+    id: "home",
+    name: "居家"
+  }, {
+    id: "medical",
+    name: "醫療"
+  }, {
+    id: "work",
+    name: "工作"
+  }, {
+    id: "invest",
+    name: "投資"
+  }, {
+    id: "other_exp",
+    name: "其他"
+  }];
+  const incomeCategories = [{
+    id: "salary",
+    name: "薪資"
+  }, {
+    id: "bonus",
+    name: "獎金"
+  }, {
+    id: "commission",
+    name: "業績獎金"
+  }, {
+    id: "side",
+    name: "副業收入"
+  }, {
+    id: "invest_income",
+    name: "投資收益"
+  }, {
+    id: "interest",
+    name: "利息或股息"
+  }, {
+    id: "other_inc",
+    name: "其他收入"
+  }];
+  return {
+    liabilities: [{
+      id: uid(),
+      name: "信用卡分期",
+      amount: 45000,
+      note: ""
+    }, {
+      id: uid(),
+      name: "汽車貸款",
+      amount: 220000,
+      note: ""
+    }],
+    assetCategories: [{
       id: uid(),
       name: "存款帳戶",
-      items: [
-        { id: uid(), name: "台幣活存", amount: 180000 },
-        { id: uid(), name: "美金外幣帳戶", amount: 60000 },
-      ],
-    },
-    {
+      items: [{
+        id: uid(),
+        name: "台幣活存",
+        amount: 180000
+      }, {
+        id: uid(),
+        name: "美金外幣帳戶",
+        amount: 60000
+      }]
+    }, {
       id: uid(),
       name: "證券資產",
-      items: [{ id: uid(), name: "美股部位", amount: 95000 }],
-    },
-  ],
-  dreams: [
-    {
+      items: [{
+        id: uid(),
+        name: "美股部位",
+        amount: 95000
+      }]
+    }],
+    dreams: [{
       id: uid(),
       name: "年底與女朋友去泰國跨年（搭乘星宇航空商務艙）",
       target: 150000,
-      note: "",
-    },
-  ],
-});
-
-/* ------------------------------------------------------------------ */
-/*  品牌標記（羅盤 / 十字準星圖標）                                      */
-/* ------------------------------------------------------------------ */
-
-function BlueprintMark({ size = 34 }) {
-  return (
-    <div
-      className="flex items-center justify-center shrink-0"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 8,
-        border: `1.5px solid ${C.ink}`,
-        background: C.paper,
-      }}
-    >
-      <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="8" stroke={C.ink} strokeWidth="1.4" />
-        <line x1="12" y1="1" x2="12" y2="5" stroke={C.blue} strokeWidth="1.4" />
-        <line x1="12" y1="19" x2="12" y2="23" stroke={C.blue} strokeWidth="1.4" />
-        <line x1="1" y1="12" x2="5" y2="12" stroke={C.blue} strokeWidth="1.4" />
-        <line x1="19" y1="12" x2="23" y2="12" stroke={C.blue} strokeWidth="1.4" />
-        <circle cx="12" cy="12" r="2" fill={C.rust} />
-      </svg>
-    </div>
-  );
-}
+      note: ""
+    }],
+    expenseCategories,
+    incomeCategories,
+    expenses: [{
+      id: uid(),
+      name: "超市採買",
+      amount: 1250,
+      categoryId: "food",
+      date: today,
+      note: ""
+    }, {
+      id: uid(),
+      name: "捷運儲值",
+      amount: 500,
+      categoryId: "transport",
+      date: iso(d2),
+      note: ""
+    }, {
+      id: uid(),
+      name: "看電影",
+      amount: 680,
+      categoryId: "entertainment",
+      date: iso(d3),
+      note: ""
+    }],
+    incomes: [{
+      id: uid(),
+      source: "公司薪資",
+      amount: 55000,
+      categoryId: "salary",
+      date: iso(d3),
+      note: ""
+    }]
+  };
+};
 
 /* ------------------------------------------------------------------ */
 /*  行內編輯元件                                                        */
 /* ------------------------------------------------------------------ */
 
-function InlineEdit({ value, onSave, type = "text", prefix = "", className = "", style = {}, placeholder = "" }) {
+function InlineEdit({
+  value,
+  onSave,
+  type = "text",
+  prefix = "",
+  className = "",
+  style = {},
+  placeholder = ""
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef(null);
-
   useEffect(() => setDraft(value), [value]);
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -205,576 +379,1469 @@ function InlineEdit({ value, onSave, type = "text", prefix = "", className = "",
       inputRef.current.select();
     }
   }, [editing]);
-
   const commit = () => {
     setEditing(false);
     let v = draft;
     if (type === "number") {
-      v = Number(String(draft).replace(/[^0-9.-]/g, "")) || 0;
+      v = Math.max(0, Number(String(draft).replace(/[^0-9.]/g, "")) || 0);
     } else {
       v = String(draft).trim();
       if (!v) v = value;
     }
     onSave(v);
   };
-
   const cancel = () => {
     setDraft(value);
     setEditing(false);
   };
-
   if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        value={draft}
-        inputMode={type === "number" ? "decimal" : "text"}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
-          if (e.key === "Escape") cancel();
-        }}
-        placeholder={placeholder}
-        className={`rounded-lg px-2 py-1 outline-none w-full ${className}`}
-        style={{
-          fontSize: 16,
-          background: "#F4F7FA",
-          border: `1.5px solid ${C.blue}`,
-          color: C.ink,
-          ...style,
-        }}
-      />
-    );
+    return /*#__PURE__*/React.createElement("input", {
+      ref: inputRef,
+      value: draft,
+      inputMode: type === "number" ? "decimal" : "text",
+      onChange: e => setDraft(e.target.value),
+      onBlur: commit,
+      onKeyDown: e => {
+        if (e.key === "Enter") commit();
+        if (e.key === "Escape") cancel();
+      },
+      placeholder: placeholder,
+      className: `rounded-lg px-2 py-1 outline-none w-full ${className}`,
+      style: {
+        fontSize: 16,
+        background: "#F4F3EF",
+        border: `1.5px solid ${C.slateBlue}`,
+        color: C.ink,
+        ...style
+      }
+    });
   }
-
-  return (
-    <button
-      type="button"
-      onClick={() => setEditing(true)}
-      className={`text-left w-full active:opacity-60 transition-opacity ${className}`}
-      style={style}
-    >
-      {type === "number" ? `${prefix}${formatMoney(value)}` : value || placeholder}
-    </button>
-  );
+  return /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setEditing(true),
+    className: `text-left w-full active:opacity-60 transition-opacity ${className}`,
+    style: style
+  }, type === "number" ? `${prefix}${formatMoney(value)}` : value || placeholder);
 }
 
 /* ------------------------------------------------------------------ */
 /*  共用小元件                                                          */
 /* ------------------------------------------------------------------ */
 
-function IconButton({ onClick, children, tone = C.inkSoft, hoverBg = "rgba(22,50,79,0.06)", className = "" }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center justify-center rounded-lg transition-colors active:scale-95 ${className}`}
-      style={{ minWidth: 40, minHeight: 40, color: tone }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = hoverBg)}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-    >
-      {children}
-    </button>
-  );
+function IconButton({
+  onClick,
+  children,
+  tone = C.inkSoft,
+  hoverBg = "rgba(63,68,65,0.06)",
+  className = ""
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: onClick,
+    className: `flex items-center justify-center rounded-lg transition-colors active:scale-95 ${className}`,
+    style: {
+      minWidth: 40,
+      minHeight: 40,
+      color: tone
+    },
+    onMouseEnter: e => e.currentTarget.style.background = hoverBg,
+    onMouseLeave: e => e.currentTarget.style.background = "transparent"
+  }, children);
 }
-
-function CornerMarks() {
-  const tick = { position: "absolute", width: 9, height: 9, borderColor: C.inkSoft, opacity: 0.55 };
-  return (
-    <>
-      <span style={{ ...tick, top: 8, left: 8, borderTop: "1.5px solid", borderLeft: "1.5px solid" }} />
-      <span style={{ ...tick, top: 8, right: 8, borderTop: "1.5px solid", borderRight: "1.5px solid" }} />
-      <span style={{ ...tick, bottom: 8, left: 8, borderBottom: "1.5px solid", borderLeft: "1.5px solid" }} />
-      <span style={{ ...tick, bottom: 8, right: 8, borderBottom: "1.5px solid", borderRight: "1.5px solid" }} />
-    </>
-  );
+function PaperCard({
+  children,
+  className = ""
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: `relative rounded-2xl ${className}`,
+    style: {
+      background: C.card,
+      border: `1px solid ${C.border}`,
+      boxShadow: "0 1px 3px rgba(63,68,65,0.05)"
+    }
+  }, children);
 }
-
-function PaperCard({ children, className = "", marks = true }) {
-  return (
-    <div
-      className={`relative rounded-xl ${className}`}
-      style={{
-        background: C.card,
-        border: `1px solid ${C.border}`,
-        boxShadow: "0 1px 2px rgba(22,50,79,0.04)",
-      }}
-    >
-      {marks && <CornerMarks />}
-      {children}
-    </div>
-  );
+function TotalBoard({
+  label,
+  amount,
+  tone,
+  icon,
+  sub
+}) {
+  return /*#__PURE__*/React.createElement(PaperCard, {
+    className: "p-6 mb-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-1.5 text-xs mb-2 uppercase tracking-widest",
+    style: {
+      color: C.inkSoft
+    }
+  }, icon, /*#__PURE__*/React.createElement("span", null, label)), /*#__PURE__*/React.createElement("div", {
+    className: "text-4xl font-semibold tracking-tight font-mono",
+    style: {
+      color: tone
+    }
+  }, "NT$ ", formatMoney(amount)), sub && /*#__PURE__*/React.createElement("div", {
+    className: "text-xs mt-2",
+    style: {
+      color: C.inkSoft
+    }
+  }, sub));
 }
-
-function TotalBoard({ label, amount, tone, icon }) {
-  return (
-    <PaperCard className="p-6 mb-6 overflow-hidden">
-      <div
-        className="absolute inset-0 opacity-70 pointer-events-none"
-        style={{
-          backgroundImage: `radial-gradient(${C.grid} 1px, transparent 1px)`,
-          backgroundSize: "16px 16px",
-        }}
-      />
-      <div className="relative">
-        <div
-          className="flex items-center gap-1.5 text-xs mb-2 uppercase tracking-widest"
-          style={{ color: C.inkSoft }}
-        >
-          {icon}
-          <span>{label}</span>
-        </div>
-        <div className="text-4xl font-semibold tracking-tight font-mono" style={{ color: tone }}>
-          NT$ {formatMoney(amount)}
-        </div>
-      </div>
-    </PaperCard>
-  );
+function StatCard({
+  label,
+  amount,
+  tone
+}) {
+  return /*#__PURE__*/React.createElement(PaperCard, {
+    className: "p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-xs mb-1.5",
+    style: {
+      color: C.inkSoft
+    }
+  }, label), /*#__PURE__*/React.createElement("div", {
+    className: "text-xl font-semibold font-mono",
+    style: {
+      color: tone
+    }
+  }, "NT$ ", formatMoney(amount)));
 }
 
 /* ------------------------------------------------------------------ */
-/*  通用彈窗（新增用）                                                   */
+/*  通用彈窗（新增／編輯用，支援 text / number / date / select）           */
 /* ------------------------------------------------------------------ */
 
-function Modal({ open, title, fields, onClose, onSubmit, submitLabel = "新增" }) {
+function Modal({
+  open,
+  title,
+  fields,
+  initialValues,
+  onClose,
+  onSubmit,
+  submitLabel = "儲存",
+  onDelete
+}) {
   const [form, setForm] = useState({});
-
   useEffect(() => {
     if (open) {
       const init = {};
-      fields.forEach((f) => (init[f.key] = ""));
+      fields.forEach(f => {
+        if (initialValues && initialValues[f.key] !== undefined && initialValues[f.key] !== null) {
+          init[f.key] = String(initialValues[f.key]);
+        } else if (f.type === "date") {
+          init[f.key] = todayISO();
+        } else if (f.type === "select") {
+          init[f.key] = f.options && f.options[0] ? f.options[0].value : "";
+        } else {
+          init[f.key] = "";
+        }
+      });
       setForm(init);
     }
-  }, [open, fields]);
-
+  }, [open, fields, initialValues]);
   if (!open) return null;
-
-  const canSubmit = fields
-    .filter((f) => f.required !== false)
-    .every((f) => String(form[f.key] ?? "").trim() !== "");
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: "rgba(22,50,79,0.35)" }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl p-6 pb-8"
-        style={{
-          background: C.paper,
-          borderTop: `1px solid ${C.border}`,
-          border: "1px solid " + C.border,
-          animation: "slideUp 0.25s ease-out",
-        }}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-medium" style={{ color: C.ink }}>{title}</h3>
-          <IconButton onClick={onClose}>
-            <X size={20} />
-          </IconButton>
-        </div>
-
-        <div className="space-y-4">
-          {fields.map((f) => (
-            <div key={f.key}>
-              <label className="block text-xs mb-1.5 uppercase tracking-wide" style={{ color: C.inkSoft }}>
-                {f.label}
-              </label>
-              <input
-                inputMode={f.type === "number" ? "decimal" : "text"}
-                placeholder={f.placeholder || ""}
-                value={form[f.key] ?? ""}
-                onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
-                className="w-full rounded-xl px-4 py-3 outline-none transition-colors"
-                style={{ fontSize: 16, background: C.card, border: `1.5px solid ${C.border}`, color: C.ink }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = C.blue)}
-                onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
-              />
-            </div>
-          ))}
-        </div>
-
-        <button
-          disabled={!canSubmit}
-          onClick={() => {
-            const payload = { ...form };
-            fields.forEach((f) => {
-              if (f.type === "number") {
-                payload[f.key] = Number(String(payload[f.key]).replace(/[^0-9.-]/g, "")) || 0;
-              }
-            });
-            onSubmit(payload);
-            onClose();
-          }}
-          className="w-full mt-6 rounded-xl py-3.5 font-medium transition-opacity disabled:opacity-30"
-          style={{ background: C.ink, color: "#FFFFFF", minHeight: 48 }}
-        >
-          {submitLabel}
-        </button>
-      </div>
-    </div>
-  );
+  const canSubmit = fields.filter(f => f.required !== false).every(f => String(form[f.key] ?? "").trim() !== "");
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 flex items-end sm:items-center justify-center",
+    style: {
+      background: "rgba(63,68,65,0.35)"
+    },
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl p-6 pb-8 max-h-[88vh] overflow-y-auto",
+    style: {
+      background: C.bg,
+      border: `1px solid ${C.border}`,
+      animation: "slideUp 0.25s ease-out"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-medium",
+    style: {
+      color: C.ink
+    }
+  }, title), /*#__PURE__*/React.createElement(IconButton, {
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement(X, {
+    size: 20
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, fields.map(f => /*#__PURE__*/React.createElement("div", {
+    key: f.key
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs mb-1.5 uppercase tracking-wide",
+    style: {
+      color: C.inkSoft
+    }
+  }, f.label), f.type === "select" ? /*#__PURE__*/React.createElement("select", {
+    value: form[f.key] ?? "",
+    onChange: e => setForm(s => ({
+      ...s,
+      [f.key]: e.target.value
+    })),
+    className: "w-full rounded-xl px-4 py-3 outline-none",
+    style: {
+      fontSize: 16,
+      background: C.card,
+      border: `1.5px solid ${C.border}`,
+      color: C.ink,
+      minHeight: 48
+    }
+  }, (f.options || []).map(o => /*#__PURE__*/React.createElement("option", {
+    key: o.value,
+    value: o.value
+  }, o.label))) : /*#__PURE__*/React.createElement("input", {
+    type: f.type === "date" ? "date" : "text",
+    inputMode: f.type === "number" ? "decimal" : undefined,
+    placeholder: f.placeholder || "",
+    value: form[f.key] ?? "",
+    onChange: e => setForm(s => ({
+      ...s,
+      [f.key]: e.target.value
+    })),
+    className: "w-full rounded-xl px-4 py-3 outline-none transition-colors",
+    style: {
+      fontSize: 16,
+      background: C.card,
+      border: `1.5px solid ${C.border}`,
+      color: C.ink,
+      minHeight: 48
+    },
+    onFocus: e => e.currentTarget.style.borderColor = C.slateBlue,
+    onBlur: e => e.currentTarget.style.borderColor = C.border
+  })))), onDelete && /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      if (!window.confirm("確定要刪除這筆紀錄嗎？此動作無法復原。")) return;
+      onDelete();
+      onClose();
+    },
+    className: "w-full mt-4 rounded-xl py-3 font-medium border",
+    style: {
+      borderColor: C.terracotta,
+      color: C.terracotta,
+      minHeight: 44
+    }
+  }, "刪除這筆紀錄"), /*#__PURE__*/React.createElement("button", {
+    disabled: !canSubmit,
+    onClick: () => {
+      const payload = {
+        ...form
+      };
+      fields.forEach(f => {
+        if (f.type === "number") {
+          payload[f.key] = Math.max(0, Number(String(payload[f.key]).replace(/[^0-9.]/g, "")) || 0);
+        }
+      });
+      onSubmit(payload);
+      onClose();
+    },
+    className: "w-full mt-3 rounded-xl py-3.5 font-medium transition-opacity disabled:opacity-30",
+    style: {
+      background: C.ink,
+      color: "#FFFFFF",
+      minHeight: 48
+    }
+  }, submitLabel)));
 }
 
 /* ------------------------------------------------------------------ */
-/*  分頁一：負債管理                                                     */
+/*  分類管理彈窗（收支通用）                                              */
 /* ------------------------------------------------------------------ */
 
-function LiabilitiesTab({ liabilities, setLiabilities }) {
+function CategoryManageModal({
+  open,
+  onClose,
+  categories,
+  setCategories,
+  title
+}) {
+  const [newName, setNewName] = useState("");
+  if (!open) return null;
+  const rename = (id, name) => setCategories(list => list.map(c => c.id === id ? {
+    ...c,
+    name
+  } : c));
+  const remove = id => {
+    if (!window.confirm("確定要刪除這個分類嗎？已使用此分類的紀錄不會被刪除。")) return;
+    setCategories(list => list.filter(c => c.id !== id));
+  };
+  const add = () => {
+    const n = newName.trim();
+    if (!n) return;
+    setCategories(list => [...list, {
+      id: uid(),
+      name: n
+    }]);
+    setNewName("");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 flex items-end sm:items-center justify-center",
+    style: {
+      background: "rgba(63,68,65,0.35)"
+    },
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl p-6 pb-8 max-h-[80vh] overflow-y-auto",
+    style: {
+      background: C.bg,
+      border: `1px solid ${C.border}`,
+      animation: "slideUp 0.25s ease-out"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-medium",
+    style: {
+      color: C.ink
+    }
+  }, title), /*#__PURE__*/React.createElement(IconButton, {
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement(X, {
+    size: 20
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2 mb-4"
+  }, categories.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    className: "flex items-center gap-2 rounded-lg px-3 py-2",
+    style: {
+      background: C.card,
+      border: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement(InlineEdit, {
+    value: c.name,
+    onSave: v => rename(c.id, v),
+    className: "text-sm flex-1",
+    style: {
+      color: C.ink
+    }
+  }), /*#__PURE__*/React.createElement(IconButton, {
+    hoverBg: "rgba(181,143,130,0.12)",
+    onClick: () => remove(c.id)
+  }, /*#__PURE__*/React.createElement(Trash2, {
+    size: 16
+  })))), categories.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-center py-4",
+    style: {
+      color: C.inkSoft
+    }
+  }, "尚無分類")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    value: newName,
+    onChange: e => setNewName(e.target.value),
+    onKeyDown: e => e.key === "Enter" && add(),
+    placeholder: "新增分類名稱",
+    className: "flex-1 rounded-xl px-4 py-3 outline-none",
+    style: {
+      fontSize: 16,
+      background: C.card,
+      border: `1.5px solid ${C.border}`,
+      color: C.ink,
+      minHeight: 48
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: add,
+    className: "rounded-xl px-4 font-medium",
+    style: {
+      background: C.ink,
+      color: "#fff",
+      minHeight: 48,
+      minWidth: 48
+    }
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 18
+  })))));
+}
+
+/* ------------------------------------------------------------------ */
+/*  收支表單欄位設定（共用，避免重複程式碼）                               */
+/* ------------------------------------------------------------------ */
+
+function expenseFieldsConfig(categories) {
+  return [{
+    key: "name",
+    label: "消費名稱",
+    placeholder: "例如：午餐"
+  }, {
+    key: "amount",
+    label: "消費金額",
+    type: "number",
+    placeholder: "0"
+  }, {
+    key: "categoryId",
+    label: "消費種類",
+    type: "select",
+    options: categories.map(c => ({
+      value: c.id,
+      label: c.name
+    }))
+  }, {
+    key: "date",
+    label: "消費日期",
+    type: "date"
+  }, {
+    key: "note",
+    label: "備註（選填）",
+    required: false,
+    placeholder: ""
+  }];
+}
+function incomeFieldsConfig(categories) {
+  return [{
+    key: "source",
+    label: "收入來源",
+    placeholder: "例如：公司薪資"
+  }, {
+    key: "amount",
+    label: "收入金額",
+    type: "number",
+    placeholder: "0"
+  }, {
+    key: "categoryId",
+    label: "收入種類",
+    type: "select",
+    options: categories.map(c => ({
+      value: c.id,
+      label: c.name
+    }))
+  }, {
+    key: "date",
+    label: "收入日期",
+    type: "date"
+  }, {
+    key: "note",
+    label: "備註（選填）",
+    required: false,
+    placeholder: ""
+  }];
+}
+
+/* ------------------------------------------------------------------ */
+/*  月份切換列                                                          */
+/* ------------------------------------------------------------------ */
+
+function MonthNav({
+  monthKey,
+  onChange
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center gap-4 mb-4"
+  }, /*#__PURE__*/React.createElement(IconButton, {
+    onClick: () => onChange(shiftMonth(monthKey, -1))
+  }, /*#__PURE__*/React.createElement(ChevronLeft, {
+    size: 18
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-medium font-mono",
+    style: {
+      color: C.ink,
+      minWidth: 90,
+      textAlign: "center"
+    }
+  }, formatMonthLabel(monthKey)), /*#__PURE__*/React.createElement(IconButton, {
+    onClick: () => onChange(shiftMonth(monthKey, 1))
+  }, /*#__PURE__*/React.createElement(ChevronRight, {
+    size: 18
+  })));
+}
+
+/* ------------------------------------------------------------------ */
+/*  收支通用列表分頁（LedgerTab）— 支出／收入共用同一套邏輯                  */
+/* ------------------------------------------------------------------ */
+
+function LedgerTab({
+  kind,
+  records,
+  setRecords,
+  categories,
+  setCategories
+}) {
+  const isExpense = kind === "expense";
+  const tone = isExpense ? C.terracotta : C.sage;
+  const nameKey = isExpense ? "name" : "source";
+  const nameLabel = isExpense ? "消費名稱" : "收入來源";
+  const addLabel = isExpense ? "新增支出" : "新增收入";
+  const totalLabel = isExpense ? "當月支出總額" : "當月收入總額";
+  const icon = isExpense ? /*#__PURE__*/React.createElement(TrendingDown, {
+    size: 14
+  }) : /*#__PURE__*/React.createElement(TrendingUp, {
+    size: 14
+  });
+  const fieldsConfig = isExpense ? expenseFieldsConfig : incomeFieldsConfig;
+  const [monthKey, setMonthKey] = useState(monthKeyOf(todayISO()));
+  const [filterCat, setFilterCat] = useState("all");
+  const [sortBy, setSortBy] = useState("date_desc");
+  const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const monthRecords = records.filter(r => monthKeyOf(r.date) === monthKey);
+  const monthTotal = monthRecords.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  let list = monthRecords.filter(r => filterCat === "all" || r.categoryId === filterCat);
+  list = [...list].sort((a, b) => {
+    if (sortBy === "date_desc") return b.date.localeCompare(a.date);
+    if (sortBy === "date_asc") return a.date.localeCompare(b.date);
+    if (sortBy === "amount_desc") return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+    if (sortBy === "amount_asc") return (Number(a.amount) || 0) - (Number(b.amount) || 0);
+    return 0;
+  });
+  const categoryTotals = categories.map(c => ({
+    ...c,
+    amount: monthRecords.filter(r => r.categoryId === c.id).reduce((s, r) => s + (Number(r.amount) || 0), 0)
+  })).filter(c => c.amount > 0).sort((a, b) => b.amount - a.amount);
+  const categoryName = id => (categories.find(c => c.id === id) || {}).name || "未分類";
+  const addRecord = payload => setRecords(list2 => [...list2, {
+    id: uid(),
+    ...payload
+  }]);
+  const updateRecord = (id, payload) => setRecords(list2 => list2.map(r => r.id === id ? {
+    ...r,
+    ...payload
+  } : r));
+  const removeRecord = id => setRecords(list2 => list2.filter(r => r.id !== id));
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TotalBoard, {
+    label: totalLabel,
+    amount: monthTotal,
+    tone: tone,
+    icon: icon
+  }), /*#__PURE__*/React.createElement(MonthNav, {
+    monthKey: monthKey,
+    onChange: setMonthKey
+  }), categoryTotals.length > 0 && /*#__PURE__*/React.createElement(PaperCard, {
+    className: "p-4 mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs uppercase tracking-widest mb-3",
+    style: {
+      color: C.inkSoft
+    }
+  }, "分類佔比"), categoryTotals.map(c => {
+    const pct = monthTotal > 0 ? c.amount / monthTotal * 100 : 0;
+    return /*#__PURE__*/React.createElement("div", {
+      key: c.id,
+      className: "mb-2.5 last:mb-0"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-between text-xs mb-1",
+      style: {
+        color: C.ink
+      }
+    }, /*#__PURE__*/React.createElement("span", null, c.name), /*#__PURE__*/React.createElement("span", {
+      className: "font-mono",
+      style: {
+        color: C.inkSoft
+      }
+    }, pct.toFixed(0), "% · NT$ ", formatMoney(c.amount))), /*#__PURE__*/React.createElement("div", {
+      className: "rounded-full overflow-hidden",
+      style: {
+        height: 6,
+        background: C.border
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 6,
+        width: `${pct}%`,
+        background: tone,
+        borderRadius: 999
+      }
+    })));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-3 gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 flex-1 min-w-0"
+  }, /*#__PURE__*/React.createElement("select", {
+    value: filterCat,
+    onChange: e => setFilterCat(e.target.value),
+    className: "text-xs rounded-lg px-2 py-2 flex-1 min-w-0",
+    style: {
+      background: C.card,
+      border: `1px solid ${C.border}`,
+      color: C.ink,
+      minHeight: 40
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "all"
+  }, "全部分類"), categories.map(c => /*#__PURE__*/React.createElement("option", {
+    key: c.id,
+    value: c.id
+  }, c.name))), /*#__PURE__*/React.createElement("select", {
+    value: sortBy,
+    onChange: e => setSortBy(e.target.value),
+    className: "text-xs rounded-lg px-2 py-2",
+    style: {
+      background: C.card,
+      border: `1px solid ${C.border}`,
+      color: C.ink,
+      minHeight: 40
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "date_desc"
+  }, "日期新到舊"), /*#__PURE__*/React.createElement("option", {
+    value: "date_asc"
+  }, "日期舊到新"), /*#__PURE__*/React.createElement("option", {
+    value: "amount_desc"
+  }, "金額高到低"), /*#__PURE__*/React.createElement("option", {
+    value: "amount_asc"
+  }, "金額低到高"))), /*#__PURE__*/React.createElement(IconButton, {
+    onClick: () => setCatModalOpen(true)
+  }, /*#__PURE__*/React.createElement(Settings, {
+    size: 17
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-3"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xs uppercase tracking-widest",
+    style: {
+      color: C.inkSoft
+    }
+  }, "明細紀錄"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAddOpen(true),
+    className: "flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg transition-colors",
+    style: {
+      color: tone,
+      minHeight: 40
+    }
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 16
+  }), " ", addLabel)), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2.5"
+  }, list.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-center py-10",
+    style: {
+      color: C.inkSoft
+    }
+  }, "這個月還沒有紀錄"), list.map(r => /*#__PURE__*/React.createElement(PaperCard, {
+    key: r.id,
+    className: "p-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "w-full text-left flex items-center gap-3",
+    onClick: () => setEditItem(r)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 min-w-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-medium truncate",
+    style: {
+      color: C.ink
+    }
+  }, r[nameKey]), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs mt-0.5",
+    style: {
+      color: C.inkSoft
+    }
+  }, categoryName(r.categoryId), " · ", formatDateTW(r.date))), /*#__PURE__*/React.createElement("div", {
+    className: "font-mono font-semibold shrink-0",
+    style: {
+      color: tone
+    }
+  }, "NT$ ", formatMoney(r.amount)))))), /*#__PURE__*/React.createElement(Modal, {
+    open: addOpen,
+    title: addLabel,
+    onClose: () => setAddOpen(false),
+    onSubmit: addRecord,
+    submitLabel: addLabel,
+    fields: fieldsConfig(categories)
+  }), /*#__PURE__*/React.createElement(Modal, {
+    open: !!editItem,
+    title: "編輯紀錄",
+    initialValues: editItem || {},
+    onClose: () => setEditItem(null),
+    onSubmit: payload => updateRecord(editItem.id, payload),
+    onDelete: () => removeRecord(editItem.id),
+    submitLabel: "儲存變更",
+    fields: fieldsConfig(categories)
+  }), /*#__PURE__*/React.createElement(CategoryManageModal, {
+    open: catModalOpen,
+    onClose: () => setCatModalOpen(false),
+    categories: categories,
+    setCategories: setCategories,
+    title: isExpense ? "管理消費分類" : "管理收入分類"
+  }));
+}
+
+/* ------------------------------------------------------------------ */
+/*  負債管理                                                            */
+/* ------------------------------------------------------------------ */
+
+function LiabilitiesTab({
+  liabilities,
+  setLiabilities
+}) {
   const [modalOpen, setModalOpen] = useState(false);
   const total = liabilities.reduce((s, l) => s + (Number(l.amount) || 0), 0);
-
-  const update = (id, patch) =>
-    setLiabilities((list) => list.map((l) => (l.id === id ? { ...l, ...patch } : l)));
-  const remove = (id) => setLiabilities((list) => list.filter((l) => l.id !== id));
-  const add = (payload) => setLiabilities((list) => [...list, { id: uid(), ...payload }]);
-
-  return (
-    <div>
-      <TotalBoard label="目前總負債金額" amount={total} tone={C.rust} icon={<TrendingDown size={14} />} />
-
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs uppercase tracking-widest" style={{ color: C.inkSoft }}>負債明細</h2>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg transition-colors"
-          style={{ color: C.rust, minHeight: 40 }}
-        >
-          <Plus size={16} /> 新增負債
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {liabilities.length === 0 && (
-          <p className="text-sm text-center py-10" style={{ color: C.inkSoft }}>
-            目前沒有負債項目，點擊右上角新增
-          </p>
-        )}
-        {liabilities.map((l) => (
-          <PaperCard key={l.id} className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <InlineEdit
-                  value={l.name}
-                  onSave={(v) => update(l.id, { name: v })}
-                  className="font-medium mb-1"
-                  style={{ color: C.ink }}
-                />
-                <InlineEdit
-                  value={l.amount}
-                  type="number"
-                  prefix="NT$ "
-                  onSave={(v) => update(l.id, { amount: v })}
-                  className="text-xl font-semibold font-mono"
-                  style={{ color: C.rust }}
-                />
-                <InlineEdit
-                  value={l.note || ""}
-                  onSave={(v) => update(l.id, { note: v })}
-                  placeholder="新增備註"
-                  className="text-xs mt-1.5"
-                  style={{ color: C.inkSoft }}
-                />
-              </div>
-              <IconButton tone={C.inkSoft} hoverBg="rgba(176,67,42,0.1)" onClick={() => remove(l.id)}>
-                <Trash2 size={18} />
-              </IconButton>
-            </div>
-          </PaperCard>
-        ))}
-      </div>
-
-      <Modal
-        open={modalOpen}
-        title="新增負債"
-        onClose={() => setModalOpen(false)}
-        onSubmit={add}
-        submitLabel="新增負債"
-        fields={[
-          { key: "name", label: "項目名稱", placeholder: "例如：信用卡分期" },
-          { key: "amount", label: "金額", type: "number", placeholder: "0" },
-          { key: "note", label: "備註（選填）", required: false, placeholder: "" },
-        ]}
-      />
-    </div>
-  );
+  const update = (id, patch) => setLiabilities(list => list.map(l => l.id === id ? {
+    ...l,
+    ...patch
+  } : l));
+  const remove = id => setLiabilities(list => list.filter(l => l.id !== id));
+  const add = payload => setLiabilities(list => [...list, {
+    id: uid(),
+    ...payload
+  }]);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TotalBoard, {
+    label: "目前總負債金額",
+    amount: total,
+    tone: C.terracotta,
+    icon: /*#__PURE__*/React.createElement(TrendingDown, {
+      size: 14
+    })
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-3"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xs uppercase tracking-widest",
+    style: {
+      color: C.inkSoft
+    }
+  }, "負債明細"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModalOpen(true),
+    className: "flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg transition-colors",
+    style: {
+      color: C.terracotta,
+      minHeight: 40
+    }
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 16
+  }), " 新增負債")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, liabilities.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-center py-10",
+    style: {
+      color: C.inkSoft
+    }
+  }, "目前沒有負債項目，點擊右上角新增"), liabilities.map(l => /*#__PURE__*/React.createElement(PaperCard, {
+    key: l.id,
+    className: "p-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-start gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 min-w-0"
+  }, /*#__PURE__*/React.createElement(InlineEdit, {
+    value: l.name,
+    onSave: v => update(l.id, {
+      name: v
+    }),
+    className: "font-medium mb-1",
+    style: {
+      color: C.ink
+    }
+  }), /*#__PURE__*/React.createElement(InlineEdit, {
+    value: l.amount,
+    type: "number",
+    prefix: "NT$ ",
+    onSave: v => update(l.id, {
+      amount: v
+    }),
+    className: "text-xl font-semibold font-mono",
+    style: {
+      color: C.terracotta
+    }
+  }), /*#__PURE__*/React.createElement(InlineEdit, {
+    value: l.note || "",
+    onSave: v => update(l.id, {
+      note: v
+    }),
+    placeholder: "新增備註",
+    className: "text-xs mt-1.5",
+    style: {
+      color: C.inkSoft
+    }
+  })), /*#__PURE__*/React.createElement(IconButton, {
+    hoverBg: "rgba(181,143,130,0.12)",
+    onClick: () => remove(l.id)
+  }, /*#__PURE__*/React.createElement(Trash2, {
+    size: 18
+  })))))), /*#__PURE__*/React.createElement(Modal, {
+    open: modalOpen,
+    title: "新增負債",
+    onClose: () => setModalOpen(false),
+    onSubmit: add,
+    submitLabel: "新增負債",
+    fields: [{
+      key: "name",
+      label: "項目名稱",
+      placeholder: "例如：信用卡分期"
+    }, {
+      key: "amount",
+      label: "金額",
+      type: "number",
+      placeholder: "0"
+    }, {
+      key: "note",
+      label: "備註（選填）",
+      required: false,
+      placeholder: ""
+    }]
+  }));
 }
 
 /* ------------------------------------------------------------------ */
-/*  分頁二：資產配置                                                     */
+/*  資產配置                                                            */
 /* ------------------------------------------------------------------ */
 
-function AssetsTab({ categories, setCategories }) {
+function AssetsTab({
+  categories,
+  setCategories
+}) {
   const [catModalOpen, setCatModalOpen] = useState(false);
   const [itemModalCatId, setItemModalCatId] = useState(null);
-
-  const total = categories.reduce(
-    (s, c) => s + c.items.reduce((s2, it) => s2 + (Number(it.amount) || 0), 0),
-    0
-  );
-
-  const addCategory = (payload) =>
-    setCategories((list) => [...list, { id: uid(), name: payload.name, items: [] }]);
-  const removeCategory = (catId) =>
-    setCategories((list) => list.filter((c) => c.id !== catId));
-  const renameCategory = (catId, name) =>
-    setCategories((list) => list.map((c) => (c.id === catId ? { ...c, name } : c)));
-  const addItem = (catId, payload) =>
-    setCategories((list) =>
-      list.map((c) => (c.id === catId ? { ...c, items: [...c.items, { id: uid(), ...payload }] } : c))
-    );
-  const updateItem = (catId, itemId, patch) =>
-    setCategories((list) =>
-      list.map((c) =>
-        c.id === catId
-          ? { ...c, items: c.items.map((it) => (it.id === itemId ? { ...it, ...patch } : it)) }
-          : c
-      )
-    );
-  const removeItem = (catId, itemId) =>
-    setCategories((list) =>
-      list.map((c) => (c.id === catId ? { ...c, items: c.items.filter((it) => it.id !== itemId) } : c))
-    );
-
-  return (
-    <div>
-      <TotalBoard label="目前總資產金額" amount={total} tone={C.blue} icon={<TrendingUp size={14} />} />
-
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs uppercase tracking-widest" style={{ color: C.inkSoft }}>資產分類</h2>
-        <button
-          onClick={() => setCatModalOpen(true)}
-          className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg transition-colors"
-          style={{ color: C.blue, minHeight: 40 }}
-        >
-          <Plus size={16} /> 新增分類
-        </button>
-      </div>
-
-      <div className="space-y-5">
-        {categories.map((c) => {
-          const catTotal = c.items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
-          return (
-            <PaperCard key={c.id} className="p-4">
-              <div className="flex items-center justify-between mb-3 gap-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <Layers size={16} style={{ color: C.blue }} className="shrink-0" />
-                  <InlineEdit
-                    value={c.name}
-                    onSave={(v) => renameCategory(c.id, v)}
-                    className="font-medium"
-                    style={{ color: C.ink }}
-                  />
-                </div>
-                <span className="text-sm whitespace-nowrap font-mono" style={{ color: C.inkSoft }}>
-                  NT$ {formatMoney(catTotal)}
-                </span>
-                <IconButton hoverBg="rgba(176,67,42,0.1)" onClick={() => removeCategory(c.id)}>
-                  <Trash2 size={16} />
-                </IconButton>
-              </div>
-
-              <div className="space-y-2 mb-2">
-                {c.items.map((it) => (
-                  <div
-                    key={it.id}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2.5"
-                    style={{ background: "#F4F7FA", border: `1px solid ${C.border}` }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <InlineEdit
-                        value={it.name}
-                        onSave={(v) => updateItem(c.id, it.id, { name: v })}
-                        className="text-sm mb-0.5"
-                        style={{ color: C.ink }}
-                      />
-                      <InlineEdit
-                        value={it.amount}
-                        type="number"
-                        prefix="NT$ "
-                        onSave={(v) => updateItem(c.id, it.id, { amount: v })}
-                        className="font-medium font-mono"
-                        style={{ color: C.blue }}
-                      />
-                    </div>
-                    <IconButton hoverBg="rgba(176,67,42,0.1)" onClick={() => removeItem(c.id, it.id)}>
-                      <Trash2 size={16} />
-                    </IconButton>
-                  </div>
-                ))}
-                {c.items.length === 0 && (
-                  <p className="text-xs py-2 text-center" style={{ color: C.inkSoft }}>此分類尚無項目</p>
-                )}
-              </div>
-
-              <button
-                onClick={() => setItemModalCatId(c.id)}
-                className="flex items-center gap-1.5 text-xs px-2 py-2 transition-colors"
-                style={{ color: C.inkSoft, minHeight: 40 }}
-              >
-                <Plus size={14} /> 新增資產項目
-              </button>
-            </PaperCard>
-          );
-        })}
-      </div>
-
-      <Modal
-        open={catModalOpen}
-        title="新增資產分類"
-        onClose={() => setCatModalOpen(false)}
-        onSubmit={addCategory}
-        fields={[{ key: "name", label: "分類名稱", placeholder: "例如：虛擬貨幣" }]}
-      />
-
-      <Modal
-        open={!!itemModalCatId}
-        title="新增資產項目"
-        onClose={() => setItemModalCatId(null)}
-        onSubmit={(payload) => addItem(itemModalCatId, payload)}
-        fields={[
-          { key: "name", label: "項目名稱", placeholder: "例如：台幣帳戶" },
-          { key: "amount", label: "金額", type: "number", placeholder: "0" },
-        ]}
-      />
-    </div>
-  );
+  const total = categories.reduce((s, c) => s + c.items.reduce((s2, it) => s2 + (Number(it.amount) || 0), 0), 0);
+  const addCategory = payload => setCategories(list => [...list, {
+    id: uid(),
+    name: payload.name,
+    items: []
+  }]);
+  const removeCategory = catId => setCategories(list => list.filter(c => c.id !== catId));
+  const renameCategory = (catId, name) => setCategories(list => list.map(c => c.id === catId ? {
+    ...c,
+    name
+  } : c));
+  const addItem = (catId, payload) => setCategories(list => list.map(c => c.id === catId ? {
+    ...c,
+    items: [...c.items, {
+      id: uid(),
+      ...payload
+    }]
+  } : c));
+  const updateItem = (catId, itemId, patch) => setCategories(list => list.map(c => c.id === catId ? {
+    ...c,
+    items: c.items.map(it => it.id === itemId ? {
+      ...it,
+      ...patch
+    } : it)
+  } : c));
+  const removeItem = (catId, itemId) => setCategories(list => list.map(c => c.id === catId ? {
+    ...c,
+    items: c.items.filter(it => it.id !== itemId)
+  } : c));
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TotalBoard, {
+    label: "目前總資產金額",
+    amount: total,
+    tone: C.slateBlue,
+    icon: /*#__PURE__*/React.createElement(TrendingUp, {
+      size: 14
+    })
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-3"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "text-xs uppercase tracking-widest",
+    style: {
+      color: C.inkSoft
+    }
+  }, "資產分類"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setCatModalOpen(true),
+    className: "flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg transition-colors",
+    style: {
+      color: C.slateBlue,
+      minHeight: 40
+    }
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 16
+  }), " 新增分類")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-5"
+  }, categories.map(c => {
+    const catTotal = c.items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+    return /*#__PURE__*/React.createElement(PaperCard, {
+      key: c.id,
+      className: "p-4"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center justify-between mb-3 gap-2"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center gap-2 flex-1 min-w-0"
+    }, /*#__PURE__*/React.createElement(InlineEdit, {
+      value: c.name,
+      onSave: v => renameCategory(c.id, v),
+      className: "font-medium",
+      style: {
+        color: C.ink
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "text-sm whitespace-nowrap font-mono",
+      style: {
+        color: C.inkSoft
+      }
+    }, "NT$ ", formatMoney(catTotal)), /*#__PURE__*/React.createElement(IconButton, {
+      hoverBg: "rgba(181,143,130,0.12)",
+      onClick: () => removeCategory(c.id)
+    }, /*#__PURE__*/React.createElement(Trash2, {
+      size: 16
+    }))), /*#__PURE__*/React.createElement("div", {
+      className: "space-y-2 mb-2"
+    }, c.items.map(it => /*#__PURE__*/React.createElement("div", {
+      key: it.id,
+      className: "flex items-center gap-2 rounded-lg px-3 py-2.5",
+      style: {
+        background: C.bg,
+        border: `1px solid ${C.border}`
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex-1 min-w-0"
+    }, /*#__PURE__*/React.createElement(InlineEdit, {
+      value: it.name,
+      onSave: v => updateItem(c.id, it.id, {
+        name: v
+      }),
+      className: "text-sm mb-0.5",
+      style: {
+        color: C.ink
+      }
+    }), /*#__PURE__*/React.createElement(InlineEdit, {
+      value: it.amount,
+      type: "number",
+      prefix: "NT$ ",
+      onSave: v => updateItem(c.id, it.id, {
+        amount: v
+      }),
+      className: "font-medium font-mono",
+      style: {
+        color: C.slateBlue
+      }
+    })), /*#__PURE__*/React.createElement(IconButton, {
+      hoverBg: "rgba(181,143,130,0.12)",
+      onClick: () => removeItem(c.id, it.id)
+    }, /*#__PURE__*/React.createElement(Trash2, {
+      size: 16
+    })))), c.items.length === 0 && /*#__PURE__*/React.createElement("p", {
+      className: "text-xs py-2 text-center",
+      style: {
+        color: C.inkSoft
+      }
+    }, "此分類尚無項目")), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setItemModalCatId(c.id),
+      className: "flex items-center gap-1.5 text-xs px-2 py-2 transition-colors",
+      style: {
+        color: C.inkSoft,
+        minHeight: 40
+      }
+    }, /*#__PURE__*/React.createElement(Plus, {
+      size: 14
+    }), " 新增資產項目"));
+  })), /*#__PURE__*/React.createElement(Modal, {
+    open: catModalOpen,
+    title: "新增資產分類",
+    onClose: () => setCatModalOpen(false),
+    onSubmit: addCategory,
+    fields: [{
+      key: "name",
+      label: "分類名稱",
+      placeholder: "例如：虛擬貨幣"
+    }]
+  }), /*#__PURE__*/React.createElement(Modal, {
+    open: !!itemModalCatId,
+    title: "新增資產項目",
+    onClose: () => setItemModalCatId(null),
+    onSubmit: payload => addItem(itemModalCatId, payload),
+    fields: [{
+      key: "name",
+      label: "項目名稱",
+      placeholder: "例如：台幣帳戶"
+    }, {
+      key: "amount",
+      label: "金額",
+      type: "number",
+      placeholder: "0"
+    }]
+  }));
+}
+function WealthTab({
+  liabilities,
+  setLiabilities,
+  assetCategories,
+  setAssetCategories
+}) {
+  const [seg, setSeg] = useState("assets");
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex mb-5 rounded-xl p-1",
+    style: {
+      background: C.border
+    }
+  }, [{
+    key: "assets",
+    label: "資產"
+  }, {
+    key: "liabilities",
+    label: "負債"
+  }].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.key,
+    onClick: () => setSeg(s.key),
+    className: "flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors",
+    style: {
+      background: seg === s.key ? C.card : "transparent",
+      color: seg === s.key ? C.ink : C.inkSoft,
+      minHeight: 40
+    }
+  }, s.label))), seg === "assets" ? /*#__PURE__*/React.createElement(AssetsTab, {
+    categories: assetCategories,
+    setCategories: setAssetCategories
+  }) : /*#__PURE__*/React.createElement(LiabilitiesTab, {
+    liabilities: liabilities,
+    setLiabilities: setLiabilities
+  }));
 }
 
 /* ------------------------------------------------------------------ */
-/*  分頁三：夢想進度條                                                    */
+/*  夢想進度條                                                          */
 /* ------------------------------------------------------------------ */
 
-function ProgressRing({ percent }) {
+function ProgressRing({
+  percent
+}) {
   const clamped = Math.min(Math.max(percent, 0), 100);
   const r = 46;
   const c = 2 * Math.PI * r;
   const offset = c * (1 - clamped / 100);
   const achieved = percent >= 100;
-  return (
-    <div className="relative w-28 h-28 shrink-0">
-      <svg viewBox="0 0 100 100" className="w-28 h-28 -rotate-90">
-        <circle cx="50" cy="50" r={r} fill="none" stroke={C.grid} strokeWidth="7" />
-        <circle
-          cx="50"
-          cy="50"
-          r={r}
-          fill="none"
-          stroke={achieved ? C.gold : C.blue}
-          strokeWidth="7"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 0.6s ease" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {achieved ? (
-          <Check size={22} style={{ color: C.gold }} />
-        ) : (
-          <span className="text-lg font-semibold font-mono" style={{ color: C.ink }}>
-            {percent.toFixed(0)}%
-          </span>
-        )}
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative w-28 h-28 shrink-0"
+  }, /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 100 100",
+    className: "w-28 h-28 -rotate-90"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "50",
+    cy: "50",
+    r: r,
+    fill: "none",
+    stroke: C.border,
+    strokeWidth: "7"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "50",
+    cy: "50",
+    r: r,
+    fill: "none",
+    stroke: achieved ? C.taupe : C.slateBlue,
+    strokeWidth: "7",
+    strokeLinecap: "round",
+    strokeDasharray: c,
+    strokeDashoffset: offset,
+    style: {
+      transition: "stroke-dashoffset 0.6s ease"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 flex flex-col items-center justify-center"
+  }, achieved ? /*#__PURE__*/React.createElement(Check, {
+    size: 22,
+    style: {
+      color: C.taupe
+    }
+  }) : /*#__PURE__*/React.createElement("span", {
+    className: "text-lg font-semibold font-mono",
+    style: {
+      color: C.ink
+    }
+  }, percent.toFixed(0), "%")));
+}
+function DreamsTab({
+  dreams,
+  setDreams,
+  totalAssets
+}) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const update = (id, patch) => setDreams(list => list.map(d => d.id === id ? {
+    ...d,
+    ...patch
+  } : d));
+  const remove = id => setDreams(list => list.filter(d => d.id !== id));
+  const add = payload => setDreams(list => [...list, {
+    id: uid(),
+    ...payload
+  }]);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-sm",
+    style: {
+      color: C.inkSoft
+    }
+  }, /*#__PURE__*/React.createElement(Sparkles, {
+    size: 16,
+    style: {
+      color: C.taupe
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono"
+  }, "目前總資產 NT$ ", formatMoney(totalAssets))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModalOpen(true),
+    className: "flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg transition-colors",
+    style: {
+      color: C.taupe,
+      minHeight: 40
+    }
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 16
+  }), " 新增夢想")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-4"
+  }, dreams.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-sm text-center py-10",
+    style: {
+      color: C.inkSoft
+    }
+  }, "尚未設定夢想目標，點擊右上角新增"), dreams.map(d => {
+    const target = Number(d.target) || 1;
+    const percent = totalAssets / target * 100;
+    const remaining = target - totalAssets;
+    return /*#__PURE__*/React.createElement(PaperCard, {
+      key: d.id,
+      className: "p-5"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex gap-4"
+    }, /*#__PURE__*/React.createElement(ProgressRing, {
+      percent: percent
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "flex-1 min-w-0"
+    }, /*#__PURE__*/React.createElement(InlineEdit, {
+      value: d.name,
+      onSave: v => update(d.id, {
+        name: v
+      }),
+      className: "font-medium leading-snug mb-2",
+      style: {
+        color: C.ink
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "flex items-baseline gap-1 text-sm mb-1",
+      style: {
+        color: C.inkSoft
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "目標"), /*#__PURE__*/React.createElement(InlineEdit, {
+      value: d.target,
+      type: "number",
+      prefix: "NT$ ",
+      onSave: v => update(d.id, {
+        target: v
+      }),
+      className: "font-medium font-mono",
+      style: {
+        color: C.slateBlue
+      }
+    })), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs mt-2",
+      style: {
+        color: remaining <= 0 ? C.taupe : C.inkSoft
+      }
+    }, remaining <= 0 ? "目前總資產已足夠覆蓋此目標！" : `距離目標還差 NT$ ${formatMoney(remaining)}`)), /*#__PURE__*/React.createElement(IconButton, {
+      hoverBg: "rgba(181,143,130,0.12)",
+      onClick: () => remove(d.id)
+    }, /*#__PURE__*/React.createElement(Trash2, {
+      size: 18
+    }))), /*#__PURE__*/React.createElement(InlineEdit, {
+      value: d.note || "",
+      onSave: v => update(d.id, {
+        note: v
+      }),
+      placeholder: "新增備註",
+      className: "text-xs mt-3 pt-3",
+      style: {
+        color: C.inkSoft,
+        borderTop: `1px solid ${C.border}`
+      }
+    }));
+  })), /*#__PURE__*/React.createElement(Modal, {
+    open: modalOpen,
+    title: "新增夢想目標",
+    onClose: () => setModalOpen(false),
+    onSubmit: add,
+    fields: [{
+      key: "name",
+      label: "夢想名稱",
+      placeholder: "例如：日本賞櫻之旅"
+    }, {
+      key: "target",
+      label: "目標預估金額",
+      type: "number",
+      placeholder: "0"
+    }, {
+      key: "note",
+      label: "備註（選填）",
+      required: false,
+      placeholder: ""
+    }]
+  }));
 }
 
-function DreamsTab({ dreams, setDreams, totalAssets }) {
-  const [modalOpen, setModalOpen] = useState(false);
+/* ------------------------------------------------------------------ */
+/*  近 6 個月收支趨勢圖                                                  */
+/* ------------------------------------------------------------------ */
 
-  const update = (id, patch) =>
-    setDreams((list) => list.map((d) => (d.id === id ? { ...d, ...patch } : d)));
-  const remove = (id) => setDreams((list) => list.filter((d) => d.id !== id));
-  const add = (payload) => setDreams((list) => [...list, { id: uid(), ...payload }]);
+function TrendChart({
+  expenses,
+  incomes
+}) {
+  const months = [];
+  let mk = monthKeyOf(todayISO());
+  for (let i = 5; i >= 0; i--) months.push(shiftMonth(mk, -i));
+  const data = months.map(m => ({
+    month: m,
+    income: incomes.filter(r => monthKeyOf(r.date) === m).reduce((s, r) => s + (Number(r.amount) || 0), 0),
+    expense: expenses.filter(r => monthKeyOf(r.date) === m).reduce((s, r) => s + (Number(r.amount) || 0), 0)
+  }));
+  const max = Math.max(1, ...data.map(d => Math.max(d.income, d.expense)));
+  return /*#__PURE__*/React.createElement(PaperCard, {
+    className: "p-4 mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs uppercase tracking-widest mb-4",
+    style: {
+      color: C.inkSoft
+    }
+  }, "收支趨勢（近 6 個月）"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-end justify-between gap-2",
+    style: {
+      height: 120
+    }
+  }, data.map(d => /*#__PURE__*/React.createElement("div", {
+    key: d.month,
+    className: "flex-1 flex flex-col items-center gap-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-end gap-1",
+    style: {
+      height: 90
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 8,
+      height: `${d.income / max * 90}px`,
+      background: C.sage,
+      borderRadius: 3
+    },
+    title: "收入"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 8,
+      height: `${d.expense / max * 90}px`,
+      background: C.terracotta,
+      borderRadius: 3
+    },
+    title: "支出"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px]",
+    style: {
+      color: C.inkSoft
+    }
+  }, parseInt(d.month.split("-")[1], 10), "月")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4 mt-3 text-[11px]",
+    style: {
+      color: C.inkSoft
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "flex items-center gap-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 8,
+      height: 8,
+      borderRadius: 2,
+      background: C.sage,
+      display: "inline-block"
+    }
+  }), "收入"), /*#__PURE__*/React.createElement("span", {
+    className: "flex items-center gap-1"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 8,
+      height: 8,
+      borderRadius: 2,
+      background: C.terracotta,
+      display: "inline-block"
+    }
+  }), "支出")));
+}
 
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-sm" style={{ color: C.inkSoft }}>
-          <Sparkles size={16} style={{ color: C.gold }} />
-          <span className="font-mono">目前總資產 NT$ {formatMoney(totalAssets)}</span>
-        </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg transition-colors"
-          style={{ color: C.gold, minHeight: 40 }}
-        >
-          <Plus size={16} /> 新增夢想
-        </button>
-      </div>
+/* ------------------------------------------------------------------ */
+/*  首頁（財務總覽）                                                     */
+/* ------------------------------------------------------------------ */
 
-      <div className="space-y-4">
-        {dreams.length === 0 && (
-          <p className="text-sm text-center py-10" style={{ color: C.inkSoft }}>
-            尚未設定夢想目標，點擊右上角新增
-          </p>
-        )}
-        {dreams.map((d) => {
-          const target = Number(d.target) || 1;
-          const percent = (totalAssets / target) * 100;
-          const remaining = target - totalAssets;
-          return (
-            <PaperCard key={d.id} className="p-5">
-              <div className="flex gap-4">
-                <ProgressRing percent={percent} />
-                <div className="flex-1 min-w-0">
-                  <InlineEdit
-                    value={d.name}
-                    onSave={(v) => update(d.id, { name: v })}
-                    className="font-medium leading-snug mb-2"
-                    style={{ color: C.ink }}
-                  />
-                  <div className="flex items-baseline gap-1 text-sm mb-1" style={{ color: C.inkSoft }}>
-                    <span>目標</span>
-                    <InlineEdit
-                      value={d.target}
-                      type="number"
-                      prefix="NT$ "
-                      onSave={(v) => update(d.id, { target: v })}
-                      className="font-medium font-mono"
-                      style={{ color: C.blue }}
-                    />
-                  </div>
-                  <p className="text-xs mt-2" style={{ color: remaining <= 0 ? C.gold : C.inkSoft }}>
-                    {remaining <= 0
-                      ? "目前總資產已足夠覆蓋此目標！"
-                      : `距離目標還差 NT$ ${formatMoney(remaining)}`}
-                  </p>
-                </div>
-                <IconButton hoverBg="rgba(176,67,42,0.1)" onClick={() => remove(d.id)}>
-                  <Trash2 size={18} />
-                </IconButton>
-              </div>
-              <InlineEdit
-                value={d.note || ""}
-                onSave={(v) => update(d.id, { note: v })}
-                placeholder="新增備註"
-                className="text-xs mt-3 pt-3"
-                style={{ color: C.inkSoft, borderTop: `1px solid ${C.border}` }}
-              />
-            </PaperCard>
-          );
-        })}
-      </div>
+function HomeTab({
+  expenses,
+  incomes,
+  expenseCategories,
+  onQuickAdd
+}) {
+  const currentMonth = monthKeyOf(todayISO());
+  const currentYear = yearKeyOf(todayISO());
+  const today = todayISO();
+  const monthExpense = expenses.filter(r => monthKeyOf(r.date) === currentMonth).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const monthIncome = incomes.filter(r => monthKeyOf(r.date) === currentMonth).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const balance = monthIncome - monthExpense;
+  const yearIncome = incomes.filter(r => yearKeyOf(r.date) === currentYear && r.date <= today).reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const yearAvgIncome = yearIncome / 12;
+  const recentExpenses = [...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+  const recentIncomes = [...incomes].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+  const topCategories = expenseCategories.map(c => ({
+    ...c,
+    amount: expenses.filter(r => monthKeyOf(r.date) === currentMonth && r.categoryId === c.id).reduce((s, r) => s + (Number(r.amount) || 0), 0)
+  })).filter(c => c.amount > 0).sort((a, b) => b.amount - a.amount).slice(0, 3);
+  const categoryName = id => (expenseCategories.find(c => c.id === id) || {}).name || "未分類";
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TotalBoard, {
+    label: "本月花費",
+    amount: monthExpense,
+    tone: C.terracotta,
+    icon: /*#__PURE__*/React.createElement(TrendingDown, {
+      size: 14
+    })
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-3 mb-5"
+  }, /*#__PURE__*/React.createElement(StatCard, {
+    label: "本月收入",
+    amount: monthIncome,
+    tone: C.sage
+  }), /*#__PURE__*/React.createElement(StatCard, {
+    label: "本月結餘",
+    amount: balance,
+    tone: balance >= 0 ? C.sage : C.terracotta
+  }), /*#__PURE__*/React.createElement(StatCard, {
+    label: "年度累積收入",
+    amount: yearIncome,
+    tone: C.slateBlue
+  }), /*#__PURE__*/React.createElement(StatCard, {
+    label: "年度平均月收入",
+    amount: yearAvgIncome,
+    tone: C.slateBlue
+  })), /*#__PURE__*/React.createElement(TrendChart, {
+    expenses: expenses,
+    incomes: incomes
+  }), topCategories.length > 0 && /*#__PURE__*/React.createElement(PaperCard, {
+    className: "p-4 mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs uppercase tracking-widest mb-3",
+    style: {
+      color: C.inkSoft
+    }
+  }, "本月主要消費分類"), topCategories.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    className: "flex justify-between text-sm mb-2 last:mb-0",
+    style: {
+      color: C.ink
+    }
+  }, /*#__PURE__*/React.createElement("span", null, c.name), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono",
+    style: {
+      color: C.terracotta
+    }
+  }, "NT$ ", formatMoney(c.amount))))), /*#__PURE__*/React.createElement(PaperCard, {
+    className: "p-4 mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs uppercase tracking-widest mb-3",
+    style: {
+      color: C.inkSoft
+    }
+  }, "最近的支出紀錄"), recentExpenses.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs py-2",
+    style: {
+      color: C.inkSoft
+    }
+  }, "尚無紀錄"), recentExpenses.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.id,
+    className: "flex justify-between items-center text-sm py-1.5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "min-w-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "truncate",
+    style: {
+      color: C.ink
+    }
+  }, r.name), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px]",
+    style: {
+      color: C.inkSoft
+    }
+  }, categoryName(r.categoryId), " · ", formatDateTW(r.date))), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono shrink-0 ml-2",
+    style: {
+      color: C.terracotta
+    }
+  }, "NT$ ", formatMoney(r.amount))))), /*#__PURE__*/React.createElement(PaperCard, {
+    className: "p-4 mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-xs uppercase tracking-widest mb-3",
+    style: {
+      color: C.inkSoft
+    }
+  }, "最近的收入紀錄"), recentIncomes.length === 0 && /*#__PURE__*/React.createElement("p", {
+    className: "text-xs py-2",
+    style: {
+      color: C.inkSoft
+    }
+  }, "尚無紀錄"), recentIncomes.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.id,
+    className: "flex justify-between items-center text-sm py-1.5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "min-w-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "truncate",
+    style: {
+      color: C.ink
+    }
+  }, r.source), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px]",
+    style: {
+      color: C.inkSoft
+    }
+  }, formatDateTW(r.date))), /*#__PURE__*/React.createElement("span", {
+    className: "font-mono shrink-0 ml-2",
+    style: {
+      color: C.sage
+    }
+  }, "NT$ ", formatMoney(r.amount))))));
+}
 
-      <Modal
-        open={modalOpen}
-        title="新增夢想目標"
-        onClose={() => setModalOpen(false)}
-        onSubmit={add}
-        fields={[
-          { key: "name", label: "夢想名稱", placeholder: "例如：日本賞櫻之旅" },
-          { key: "target", label: "目標預估金額", type: "number", placeholder: "0" },
-          { key: "note", label: "備註（選填）", required: false, placeholder: "" },
-        ]}
-      />
-    </div>
-  );
+/* ------------------------------------------------------------------ */
+/*  快速記帳（首頁浮動按鈕）                                              */
+/* ------------------------------------------------------------------ */
+
+function QuickAddSheet({
+  open,
+  onClose,
+  onPick
+}) {
+  if (!open) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 flex items-end justify-center",
+    style: {
+      background: "rgba(63,68,65,0.35)"
+    },
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    className: "w-full sm:max-w-md rounded-t-3xl p-6 pb-8",
+    style: {
+      background: C.bg,
+      border: `1px solid ${C.border}`,
+      animation: "slideUp 0.25s ease-out"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "text-lg font-medium",
+    style: {
+      color: C.ink
+    }
+  }, "快速記帳"), /*#__PURE__*/React.createElement(IconButton, {
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement(X, {
+    size: 20
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 gap-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => onPick("expense"),
+    className: "flex flex-col items-center gap-2 rounded-2xl py-6",
+    style: {
+      background: C.card,
+      border: `1px solid ${C.border}`,
+      color: C.terracotta,
+      minHeight: 96
+    }
+  }, /*#__PURE__*/React.createElement(TrendingDown, {
+    size: 26
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-medium"
+  }, "新增支出")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => onPick("income"),
+    className: "flex flex-col items-center gap-2 rounded-2xl py-6",
+    style: {
+      background: C.card,
+      border: `1px solid ${C.border}`,
+      color: C.sage,
+      minHeight: 96
+    }
+  }, /*#__PURE__*/React.createElement(TrendingUp, {
+    size: 26
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm font-medium"
+  }, "新增收入")))));
 }
 
 /* ------------------------------------------------------------------ */
@@ -782,181 +1849,302 @@ function DreamsTab({ dreams, setDreams, totalAssets }) {
 /* ------------------------------------------------------------------ */
 
 function App() {
-  const [tab, setTab] = useState("assets");
+  const [tab, setTab] = useState("home");
   const [liabilities, setLiabilities] = useState([]);
   const [assetCategories, setAssetCategories] = useState([]);
   const [dreams, setDreams] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  const [incomeCategories, setIncomeCategories] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [saveError, setSaveError] = useState(false);
-
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickAddKind, setQuickAddKind] = useState(null);
   useEffect(() => {
+    const d = defaultData();
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
-      if (parsed) {
-        setLiabilities(parsed.liabilities || []);
-        setAssetCategories(parsed.assetCategories || []);
-        setDreams(parsed.dreams || []);
-      } else {
-        const d = defaultData();
-        setLiabilities(d.liabilities);
-        setAssetCategories(d.assetCategories);
-        setDreams(d.dreams);
-      }
+      setLiabilities(parsed && parsed.liabilities || d.liabilities);
+      setAssetCategories(parsed && parsed.assetCategories || d.assetCategories);
+      setDreams(parsed && parsed.dreams || d.dreams);
+      setExpenses(parsed && parsed.expenses || d.expenses);
+      setIncomes(parsed && parsed.incomes || d.incomes);
+      setExpenseCategories(parsed && parsed.expenseCategories || d.expenseCategories);
+      setIncomeCategories(parsed && parsed.incomeCategories || d.incomeCategories);
     } catch (e) {
-      const d = defaultData();
       setLiabilities(d.liabilities);
       setAssetCategories(d.assetCategories);
       setDreams(d.dreams);
+      setExpenses(d.expenses);
+      setIncomes(d.incomes);
+      setExpenseCategories(d.expenseCategories);
+      setIncomeCategories(d.incomeCategories);
     } finally {
       setLoaded(true);
     }
   }, []);
-
   useEffect(() => {
     if (!loaded) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ liabilities, assetCategories, dreams }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        liabilities,
+        assetCategories,
+        dreams,
+        expenses,
+        incomes,
+        expenseCategories,
+        incomeCategories
+      }));
       setSaveError(false);
     } catch (e) {
       setSaveError(true);
     }
-  }, [liabilities, assetCategories, dreams, loaded]);
-
-  const totalAssets = assetCategories.reduce(
-    (s, c) => s + c.items.reduce((s2, it) => s2 + (Number(it.amount) || 0), 0),
-    0
-  );
-
+  }, [liabilities, assetCategories, dreams, expenses, incomes, expenseCategories, incomeCategories, loaded]);
+  const totalAssets = assetCategories.reduce((s, c) => s + c.items.reduce((s2, it) => s2 + (Number(it.amount) || 0), 0), 0);
   const resetAll = () => {
     if (!window.confirm("確定要重設所有資料為預設範例嗎？此動作無法復原。")) return;
     const d = defaultData();
     setLiabilities(d.liabilities);
     setAssetCategories(d.assetCategories);
     setDreams(d.dreams);
+    setExpenses(d.expenses);
+    setIncomes(d.incomes);
+    setExpenseCategories(d.expenseCategories);
+    setIncomeCategories(d.incomeCategories);
   };
-
-  const tabs = [
-    { key: "liabilities", label: "負債管理", icon: Landmark, tone: C.rust },
-    { key: "assets", label: "資產配置", icon: LineChartIcon, tone: C.blue },
-    { key: "dreams", label: "夢想進度", icon: Sparkles, tone: C.gold },
-  ];
-
+  const tabs = [{
+    key: "home",
+    label: "首頁",
+    icon: HomeIcon,
+    tone: C.ink
+  }, {
+    key: "expense",
+    label: "支出",
+    icon: TrendingDown,
+    tone: C.terracotta
+  }, {
+    key: "income",
+    label: "收入",
+    icon: TrendingUp,
+    tone: C.sage
+  }, {
+    key: "wealth",
+    label: "資產",
+    icon: Landmark,
+    tone: C.slateBlue
+  }, {
+    key: "dreams",
+    label: "夢想",
+    icon: Sparkles,
+    tone: C.taupe
+  }];
   if (!loaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: C.paper }}>
-        <p className="text-sm" style={{ color: C.inkSoft }}>載入中...</p>
-      </div>
-    );
+    return /*#__PURE__*/React.createElement("div", {
+      className: "min-h-screen flex items-center justify-center",
+      style: {
+        background: C.bg
+      }
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "text-sm",
+      style: {
+        color: C.inkSoft
+      }
+    }, "載入中..."));
   }
-
-  return (
-    <div
-      className="min-h-screen"
-      style={{
-        background: C.paper,
-        backgroundImage: `radial-gradient(${C.grid} 1px, transparent 1px)`,
-        backgroundSize: "20px 20px",
-        fontFamily: "'PingFang TC','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-      }}
-    >
-      <style>{`
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen",
+    style: {
+      background: C.bg,
+      fontFamily: "'PingFang TC','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    }
+  }, /*#__PURE__*/React.createElement("style", null, `
         @keyframes slideUp { from { transform: translateY(24px); opacity:0 } to { transform: translateY(0); opacity:1 } }
-        input, button { font-family: inherit; }
+        input, button, select { font-family: inherit; }
         ::-webkit-scrollbar { width: 0; height: 0; }
-      `}</style>
-
-      <header
-        className="sticky top-0 z-30 backdrop-blur-md"
-        style={{ background: "rgba(238,242,246,0.9)", borderBottom: `1px solid ${C.border}` }}
-      >
-        <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BlueprintMark />
-            <div>
-              <h1
-                className="text-base font-semibold tracking-wide font-mono"
-                style={{ color: C.ink }}
-              >
-                Blueprint
-              </h1>
-              <p className="text-[11px]" style={{ color: saveError ? C.rust : C.inkSoft }}>
-                {saveError ? "同步失敗，請稍後再試" : "資料已自動儲存"}
-              </p>
-            </div>
-          </div>
-          <IconButton onClick={resetAll}>
-            <RotateCcw size={18} />
-          </IconButton>
-        </div>
-      </header>
-
-      <main className="max-w-lg mx-auto px-5 pt-6 pb-28">
-        {tab === "liabilities" && <LiabilitiesTab liabilities={liabilities} setLiabilities={setLiabilities} />}
-        {tab === "assets" && <AssetsTab categories={assetCategories} setCategories={setAssetCategories} />}
-        {tab === "dreams" && <DreamsTab dreams={dreams} setDreams={setDreams} totalAssets={totalAssets} />}
-      </main>
-
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-30"
-        style={{
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(16px)",
-          borderTop: `1px solid ${C.border}`,
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        }}
-      >
-        <div className="max-w-lg mx-auto flex">
-          {tabs.map(({ key, label, icon: TabIcon, tone }) => {
-            const active = tab === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className="flex-1 flex flex-col items-center gap-1 py-3 transition-colors"
-                style={{ minHeight: 60, color: active ? tone : C.inkSoft }}
-              >
-                <TabIcon size={22} strokeWidth={active ? 2.4 : 1.8} />
-                <span className="text-[11px]" style={{ fontWeight: active ? 600 : 400 }}>
-                  {label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
-  );
+      `), /*#__PURE__*/React.createElement("header", {
+    className: "sticky top-0 z-30 backdrop-blur-md",
+    style: {
+      background: "rgba(242,240,235,0.9)",
+      borderBottom: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-lg mx-auto px-5 py-4 flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-center shrink-0",
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: 8,
+      border: `1.5px solid ${C.ink}`,
+      background: C.bg
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: 20,
+    height: 20,
+    viewBox: "0 0 24 24",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "8",
+    stroke: C.ink,
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "1",
+    x2: "12",
+    y2: "5",
+    stroke: C.slateBlue,
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "19",
+    x2: "12",
+    y2: "23",
+    stroke: C.slateBlue,
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "1",
+    y1: "12",
+    x2: "5",
+    y2: "12",
+    stroke: C.slateBlue,
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "19",
+    y1: "12",
+    x2: "23",
+    y2: "12",
+    stroke: C.slateBlue,
+    strokeWidth: "1.4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "2",
+    fill: C.terracotta
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    className: "text-base font-semibold tracking-wide font-mono",
+    style: {
+      color: C.ink
+    }
+  }, "Blueprint"), /*#__PURE__*/React.createElement("p", {
+    className: "text-[11px]",
+    style: {
+      color: saveError ? C.terracotta : C.inkSoft
+    }
+  }, saveError ? "同步失敗，請稍後再試" : "資料已自動儲存"))), /*#__PURE__*/React.createElement(IconButton, {
+    onClick: resetAll
+  }, /*#__PURE__*/React.createElement(RotateCcw, {
+    size: 18
+  })))), /*#__PURE__*/React.createElement("main", {
+    className: "max-w-lg mx-auto px-5 pt-6 pb-32"
+  }, tab === "home" && /*#__PURE__*/React.createElement(HomeTab, {
+    expenses: expenses,
+    incomes: incomes,
+    expenseCategories: expenseCategories
+  }), tab === "expense" && /*#__PURE__*/React.createElement(LedgerTab, {
+    kind: "expense",
+    records: expenses,
+    setRecords: setExpenses,
+    categories: expenseCategories,
+    setCategories: setExpenseCategories
+  }), tab === "income" && /*#__PURE__*/React.createElement(LedgerTab, {
+    kind: "income",
+    records: incomes,
+    setRecords: setIncomes,
+    categories: incomeCategories,
+    setCategories: setIncomeCategories
+  }), tab === "wealth" && /*#__PURE__*/React.createElement(WealthTab, {
+    liabilities: liabilities,
+    setLiabilities: setLiabilities,
+    assetCategories: assetCategories,
+    setAssetCategories: setAssetCategories
+  }), tab === "dreams" && /*#__PURE__*/React.createElement(DreamsTab, {
+    dreams: dreams,
+    setDreams: setDreams,
+    totalAssets: totalAssets
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setQuickAddOpen(true),
+    className: "fixed z-40 flex items-center justify-center rounded-full shadow-lg",
+    style: {
+      right: 20,
+      bottom: 92,
+      width: 56,
+      height: 56,
+      background: C.ink,
+      color: "#fff",
+      boxShadow: "0 4px 12px rgba(63,68,65,0.25)"
+    }
+  }, /*#__PURE__*/React.createElement(Plus, {
+    size: 26
+  })), /*#__PURE__*/React.createElement(QuickAddSheet, {
+    open: quickAddOpen,
+    onClose: () => setQuickAddOpen(false),
+    onPick: kind => {
+      setQuickAddKind(kind);
+      setQuickAddOpen(false);
+    }
+  }), /*#__PURE__*/React.createElement(Modal, {
+    open: quickAddKind === "expense",
+    title: "新增支出",
+    onClose: () => setQuickAddKind(null),
+    onSubmit: payload => setExpenses(list => [...list, {
+      id: uid(),
+      ...payload
+    }]),
+    submitLabel: "新增支出",
+    fields: expenseFieldsConfig(expenseCategories)
+  }), /*#__PURE__*/React.createElement(Modal, {
+    open: quickAddKind === "income",
+    title: "新增收入",
+    onClose: () => setQuickAddKind(null),
+    onSubmit: payload => setIncomes(list => [...list, {
+      id: uid(),
+      ...payload
+    }]),
+    submitLabel: "新增收入",
+    fields: incomeFieldsConfig(incomeCategories)
+  }), /*#__PURE__*/React.createElement("nav", {
+    className: "fixed bottom-0 left-0 right-0 z-30",
+    style: {
+      background: "rgba(250,249,246,0.95)",
+      backdropFilter: "blur(16px)",
+      borderTop: `1px solid ${C.border}`,
+      paddingBottom: "env(safe-area-inset-bottom, 0px)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-lg mx-auto flex"
+  }, tabs.map(({
+    key,
+    label,
+    icon: TabIcon,
+    tone
+  }) => {
+    const active = tab === key;
+    return /*#__PURE__*/React.createElement("button", {
+      key: key,
+      onClick: () => setTab(key),
+      className: "flex-1 flex flex-col items-center gap-1 py-3 transition-colors",
+      style: {
+        minHeight: 60,
+        color: active ? tone : C.inkSoft
+      }
+    }, /*#__PURE__*/React.createElement(TabIcon, {
+      size: 21,
+      strokeWidth: active ? 2.4 : 1.8
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "text-[11px]",
+      style: {
+        fontWeight: active ? 600 : 400
+      }
+    }, label));
+  }))));
 }
-
-createRoot(document.getElementById("root")).render(<App />);
-</script>
-
-<script>
-  function showFatalError(title, detail) {
-    document.getElementById("root").innerHTML =
-      '<div style="max-width:520px;margin:60px auto;padding:20px;font-family:monospace;' +
-      'background:#fff5f5;border:1px solid #f3b4a6;border-radius:12px;color:#7a2b1a;' +
-      'white-space:pre-wrap;word-break:break-word;">' +
-      '<div style="font-weight:bold;margin-bottom:8px;">' + title + '</div>' +
-      '<div style="font-size:13px;">' + detail + '</div></div>';
-  }
-
-  window.addEventListener("error", function (e) {
-    showFatalError("執行時發生錯誤 (Runtime Error)", (e.error && e.error.stack) || e.message);
-  });
-
-  try {
-    var source = document.getElementById("app-source").textContent;
-    var output = Babel.transform(source, {
-      presets: [["react", { runtime: "classic" }]],
-    }).code;
-    var script = document.createElement("script");
-    script.text = output;
-    document.body.appendChild(script);
-  } catch (err) {
-    showFatalError("程式碼轉譯失敗 (Babel Transform Error)", err.message);
-  }
+createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
 </script>
 </body>
 </html>
